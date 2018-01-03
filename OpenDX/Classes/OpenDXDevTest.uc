@@ -1,0 +1,1 @@
+class OpenDXDevTest extends TCDeathmatch;

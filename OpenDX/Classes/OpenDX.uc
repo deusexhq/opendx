@@ -1,0 +1,1 @@
+class OpenDX extends TCDeathmatch;

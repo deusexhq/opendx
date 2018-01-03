@@ -1,0 +1,1 @@
+class Playground extends TCDeathmatch;
