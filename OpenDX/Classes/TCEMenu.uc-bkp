@@ -1,0 +1,243 @@
+class TCEMenu extends MenuUIScreenWindow;
+
+var MenuUIActionButtonWindow btnAug, btnSet, btnSL, btnClose, btnDisc;
+
+struct S_MenuButton
+{
+	var int y;
+	var int x;
+	var EMenuActions action;
+	var class invoke;
+	var string key;
+};
+
+var MenuUIMenuButtonWindow winButtons[4];
+
+var string ButtonNames[4];
+
+var int buttonWidth;
+var S_MenuButton buttonDefaults[4];
+
+var bool isspec;
+
+var bool IsExiting;
+
+event InitWindow()
+{
+	local Window W;
+	//, , , , ;
+	Super.InitWindow();
+
+   btnAug = winButtonBar.AddButton("Augs", HALIGN_Left);
+   btnSet = winButtonBar.AddButton("Settings", HALIGN_Left);
+   btnSL = winButtonBar.AddButton("Servers", HALIGN_Left);
+   btnDisc = winButtonBar.AddButton("Quit", HALIGN_Left);
+   btnClose = winButtonBar.AddButton("Close", HALIGN_Right);
+   
+	if (Player.GameReplicationInfo != none && !Player.GameReplicationInfo.bTeamGame)
+	{
+		ButtonNames[0] = "Play";
+		ButtonNames[1] = "";
+		ButtonNames[2] = "";
+	}
+
+	IsExiting = true;
+
+	CreateMenuButtons();
+
+    if (Player.PlayerReplicationInfo != none && Player.PlayerReplicationInfo.bIsSpectator) isspec = true;
+    else isspec = false;
+      winClient.SetBackground(Texture'DeusExUI.MaskTexture');
+   winClient.SetBackgroundStyle(DSTY_Modulated);
+
+   W = winClient.NewChild(Class'Window');
+   W.SetSize(ClientWidth, ClientHeight);
+   W.SetBackground(Texture'DeusExUI.MaskTexture');
+   W.SetBackgroundStyle(DSTY_Modulated);
+   W.Lower();
+}
+
+function SetMOTDText(string MOTDText[8])
+{
+	local int i;
+
+	for (i = 0; i < 8; i++) CreateLabel(20, 20 + (i * 15), MOTDText[i]);
+}
+
+
+final function MenuUISmallLabelWindow CreateLabel(int X, int Y, string S)
+{
+	local MenuUISmallLabelWindow W;
+
+	W = MenuUISmallLabelWindow(winClient.NewChild(Class'MenuUISmallLabelWindow'));
+	W.SetPos(X, Y);
+	W.SetText(S);
+	W.SetWordWrap(false);
+
+	return W;
+}
+
+
+function CreateMenuButtons()
+{
+	local int buttonIndex;
+
+	for (buttonIndex = 0; buttonIndex < arrayCount(buttonDefaults); buttonIndex++)
+	{
+		if (ButtonNames[buttonIndex] != "")
+		{
+			winButtons[buttonIndex] = MenuUIMenuButtonWindow(winClient.NewChild(Class'MenuUIMenuButtonWindow'));
+
+			winButtons[buttonIndex].SetButtonText(ButtonNames[buttonIndex]);
+			winButtons[buttonIndex].SetPos(buttonDefaults[buttonIndex].x, buttonDefaults[buttonIndex].y);
+			winButtons[buttonIndex].SetWidth(buttonWidth);
+		}
+	}
+}
+
+event bool BoxOptionSelected(Window box, int buttonNumber)
+{
+	root.PopWindow();
+
+	return true;
+}
+
+function bool ButtonActivated( Window buttonPressed )
+{
+	local bool bHandled;
+    local TCPlayer mmp;
+    local int  buttonIndex;
+    mmp = TCPlayer(Player);
+
+	bHandled = True;
+
+	Super.ButtonActivated(buttonPressed);
+	
+	for (buttonIndex = 0; buttonIndex < arrayCount(winButtons); buttonIndex++)
+	{
+		if (buttonPressed == winButtons[buttonIndex])
+		{
+			// Check to see if there's somewhere to go
+			ProcessMenuAction(buttonDefaults[buttonIndex].action, buttonDefaults[buttonIndex].invoke, buttonDefaults[buttonIndex].key);
+
+			bHandled = True;
+			break;
+		}
+	}
+	
+	switch( buttonPressed )
+	{
+		case btnAug:
+			root.InvokeMenuScreen(class'MenuScreenAugSetup');
+			break;
+
+		case btnSet:
+			root.InvokeMenuScreen(class'TCMenuGame');
+			break;
+			
+		case btnSL:
+			root.InvokeMenuScreen(class'mtlmenuscreenjoininternet');
+			break;
+		
+		case btnDisc:
+			Player.DisconnectPlayer();
+			break;
+		case btnClose:
+
+			root.PopWindow();
+			bHandled = True;
+			break;
+
+		default:
+			bHandled = False;
+			break;
+	}
+
+	return bHandled;
+}
+
+function ProcessCustomMenuButton(string key)
+{
+    local TCPlayer mmp;
+	
+    mmp = TCPlayer(Player);
+    isspec = false;
+    Log("Running "$key$" for "$mmp);
+   // if (mmp != none)
+   //{
+        switch(key)
+	    {
+		    case "SPECTATE":
+				Log("Running "$key$" for "$mmp);
+		        TCPlayer(Player).Spectate(1);
+		        isspec = true;
+			    break;
+		    case "JOIN_UNATCO":
+		        TCPlayer(Player).NewChangeTeam(0);
+		        Log("Running "$key$" for "$mmp);
+		        break;
+  		    case "JOIN_NSF":
+  		        TCPlayer(Player).NewChangeTeam(1);
+  		        Log("Running "$key$" for "$mmp);
+		        break;
+            case "JOIN_AUTO":
+                TCPlayer(Player).NewChangeTeam(2);
+                Log("Running "$key$" for "$mmp);
+                break;
+        }
+	//}
+
+	CancelScreen();
+}
+
+function ProcessAction(String actionKey)
+{
+	if (actionKey == "SPECTATE")
+   {
+       TCPlayer(Player).Spectate(1);
+	}
+}
+
+
+function CancelScreen()
+{
+	local TCHUD mmdxhud;
+	if (isspec) 
+	{
+		mmdxhud = TCHUD(root.hud);
+		if (mmdxhud.HUD_mode == 2) 
+		{
+			mmdxhud.HUD_mode = 0;
+			mmdxhud.UpdateSettings(Player);
+		}
+	}
+
+	// Play Cancel Sound
+	PlaySound(Sound'Menu_Cancel', 0.25); 
+
+	root.PopWindow();
+}
+
+defaultproperties
+{
+    ButtonNames(0)="Join UNATCO"
+    ButtonNames(1)="Join NSF"
+    ButtonNames(2)="Auto-assign"
+    ButtonNames(3)="Spectate"
+    buttonWidth=200
+    buttonDefaults(0)=(Y=160,X=10,Action=7,Invoke=None,Key="JOIN_UNATCO"),
+    buttonDefaults(1)=(Y=200,X=10,Action=7,Invoke=None,Key="JOIN_NSF"),
+    buttonDefaults(2)=(Y=160,X=230,Action=7,Invoke=None,Key="JOIN_AUTO"),
+    buttonDefaults(3)=(Y=200,X=230,Action=7,Invoke=None,Key="SPECTATE"),
+    actionButtons(0)=(text="Disconnect", key="DISC")
+    actionButtons(1)=(text="Settings", key="SET")
+    actionButtons(2)=(Align=HALIGN_RIGHT, text="Close", key="CANCEL")
+    actionButtons(3)=(text="Augs", key="AUGS")
+    actionButtons(4)=(text="Servers", key="DXSL")
+    Title="Welcome to DXMP"
+    ClientWidth=440
+    ClientHeight=240
+    bUsesHelpWindow=False
+    bEscapeSavesSettings=False
+    //ScreenType=0
+}
