@@ -110,12 +110,13 @@ var ODXVoteActor Votez;
 
 var OSDActor OSDA;
 
-var bool bHasUpdate, bCoreHasUpdate;
+var(OpenDX) config bool bHasUpdate;
 var string netversion;
 var string GSCData;
+var float TimeUntilUpdate;
 
 const _k013145123423321 = "_dmg";
-const version = "180102";
+const version = "180109";
 const changestr = "Added new MP menu, Added Spectator Start option";
 
 function CodeBase _CodeBase()
@@ -127,6 +128,7 @@ function UpdateCheck()
 {
 	local GenericSiteQuery GSC;
 	
+	//https://raw.githubusercontent.com/Kaiz0r/tccore/master/upd.txt
 	GSC = Spawn(class'GenericSiteQuery');
 	GSC.browse("deusex.ucoz.net", "/deusex.txt", 80, 5);
 	GSC.CallbackActor = Self;
@@ -161,6 +163,35 @@ function bool SetGMProp(string prop, string value)
 function Timer()
 {
 	local TCPlayer TCP;
+	local string datastring, DataStore, corever, netmsg;
+	if(TimeUntilUpdate > 0)
+		TimeUntilUpdate-=1;
+		
+	if(GSCData != "" && TimeUntilUpdate <= 0)
+	{
+		DataStore = GSCData;
+		GSCData = "";
+		Log("Data from Update Client found.... filtering version string.", 'OpenDX');
+		datastring = _CodeBase().Split(DataStore, "<odx>", "</odx>");
+		netmsg = _CodeBase().Split(DataStore, "<motd>", "</motd>");
+		Log("Returned net version: "$datastring$" - Current version: "$version, 'OpenDX');
+		BroadcastMessage("Returned net version: "$datastring$" - Current version: "$version);
+		BroadcastMessage(netmsg);
+		Log(netmsg, 'OpenDX');
+		if(datastring != version)
+		{
+			bHasUpdate=True;
+			SaveConfig();
+			Log("Version mismatch.. update available? Check for updates at https://github.com/Kaiz0r/opendx", 'OpenDX');
+			BroadcastMessage("OpenDX has an update available!");
+		}
+		else
+		{
+			bHasUpdate=False;
+			SaveConfig();
+			Log("OpenDX is up-to-date.", 'OpenDX');
+		}
+	}
 	
 	foreach AllActors(class'TCPlayer',TCP)
 	{
@@ -203,6 +234,7 @@ function PostBeginPlay()
 	TCT = Spawn(class'TCTimerActor');
 	Votez = Spawn(class'ODXVoteActor');
 	UpdateCheck();
+	TimeUntilUpdate=RandRange(10,15);
 }
 
 function string GetVer()
@@ -269,35 +301,7 @@ function string GetVer()
 function tick (float deltatime)
 {
 	local carcass c;
-	local string datastring, DataStore, netmsg, corever;
 	local DeusExLevelInfo Z52;
-	
-	if(GSCData != "")
-	{
-		DataStore = GSCData;
-		GSCData = "";
-		Log("Data from Update Client found.... filtering version string.");
-		datastring = _CodeBase().Split(DataStore, "<odx>", "</odx>");
-		netmsg = _CodeBase().Split(DataStore, "<motd>", "</motd>");
-		corever = _CodeBase().Split(DataStore, "<core>", "</core>");
-		Log("Returned net version: "$datastring$" - Current version: "$version, 'OpenDX');
-		Log("Returned core version: "$corever$" - Current core version: "$_CodeBase().version, 'TCCore');
-		BroadcastMessage("Returned net version: "$datastring$" - Current version: "$version);
-		BroadcastMessage("Returned core version: "$corever$" - Current core version: "$_CodeBase().version);
-		BroadcastMessage(netmsg);
-		if(datastring != version)
-		{
-			bHasUpdate=True;
-			Log("Version mismatch.. update available? Check for updates at http://deusex.ucoz.net", 'OpenDX');
-			BroadcastMessage("OpenDX has an update available!");
-		}
-		if(corever != _CodeBase().version)
-		{
-			bCoreHasUpdate=True;
-			Log("Version mismatch.. update available? Check for updates at http://deusex.ucoz.net", 'TCCore');
-			BroadcastMessage("TCCore has an update available!");
-		}
-	}
 	
 	if (!_bFixedLevel && bFixLevel)
 	{
