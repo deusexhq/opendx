@@ -105,7 +105,6 @@ var(Sharpshooter) config bool bMethodOne;
 //Static Variables
 var bool _bFixedLevel;
 var int TeamCount;
-var TCTimerActor TCT;
 var ODXVoteActor Votez;
 
 var OSDActor OSDA;
@@ -138,26 +137,6 @@ function UpdateCheck()
 function string Changes()
 {
 	return changestr;
-}
-
-function bool SetGMProp(string prop, string value)
-{
-	if(TCDeathMatch(level.game) != None)
-	{
-		if (TCDeathMatch(level.game).GetPropertyText(caps(prop)) == "")
-			return false;
-		  
-		TCDeathMatch(level.game).SetPropertyText(prop, value);
-		return true;
-	}			
-	if(TCTeam(level.game) != None)
-	{
-		if (TCTeam(level.game).GetPropertyText(caps(prop)) == "")
-			return false;
-		  
-		TCTeam(level.game).SetPropertyText(prop, value);
-			return true;
-	}
 }
 
 function Timer()
@@ -231,7 +210,6 @@ function PostBeginPlay()
 				m.MoverEncroachType = ME_IgnoreWhenEncroach;
 		
 	SetTimer(5,True);
-	TCT = Spawn(class'TCTimerActor');
 	Votez = Spawn(class'ODXVoteActor');
 	UpdateCheck();
 	TimeUntilUpdate=RandRange(10,15);

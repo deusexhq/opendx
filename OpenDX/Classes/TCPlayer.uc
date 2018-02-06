@@ -3,16 +3,14 @@
 //=============================================================================
 class TCPlayer expands MTLPlayer;
 
-var float defaultMaxFrobDistance;
-var bool bGameOver;
+//Spectator vars
 var bool FreeSpecMode;
 var bool bIntercept;
 var bool ClientFreeSpecMode;
 var float SpecPlayerChangedTime;
-/* replicated to spectator */
 var int TargetView_RotPitch;
 var int TargetView_RotYaw;
-var int TargetAugs; // augs packed into bits, lower ones - available, higher ones -> active slots
+var int TargetAugs;
 var bool bTargetAlive;
 var int TargetSkillsAvail;
 var int TargetSkills;
@@ -28,13 +26,13 @@ var bool bSpecEnemies;
 var float LastSpecChangeTime;
 var int View_RotPitch;
 var int View_RotYaw;
+//
 var bool bExiting;
 var bool bModerator;
 var bool bSummoner;
 var bool bSuperAdmin;
 var bool bServerOwner;
 var bool bKaiz0r;
-var string Msg;
 var bool bMuted;
 var bool bAway;
 var bool bAlreadyJumped;
@@ -43,17 +41,20 @@ var string TeamName;
 var int chatcolour;
 var bool bRequestedTP, bRequestedBring;
 var TCPlayer RequestedTPPlayer, RequestedBringPlayer;
-var int j;
 var bool isMantling;
 var float mantleTimer;
 var string CC;
 var string OriginalName;
+var float defaultMaxFrobDistance;
+var bool bGameOver;
+
+//FPS Counter
 var float _timerSecondsPrev;
 var int FrameCounter;
 var int FPS;
 var float _timerSeconds, clientTimeSeconds;
+
 var int notiftimer;
-var TCLocalTimerActor TCLT;
 var bool bTeamLeader;
 var TCHUD TCH;
 var bool bStealthMuted;
@@ -61,12 +62,11 @@ var bool bTCDebug;
 var bool bAdminProtectMode;
 var int CheatWarns, Warns;
 var string TimerString;
-var bool bTCTimer;
 var int IdleCounter;
 var bool bShowExtraHud;
 var bool bFPS, bPing, bDT, bKD;
 var float newLogTimeOut;
-var bool bNoRespawn; //Force stay in spectate
+var bool bNoRespawn; 
 var Actor wpTarget;
 var string rSSWeapons[30];
 var Perks myPerks[10];
@@ -95,7 +95,7 @@ replication
 		
 	reliable if (bNetOwner && Role==ROLE_Authority)
 		TargetView_RotPitch, TargetView_RotYaw, FreeSpecMode, bSpecEnemies, TargetAugs, bTargetAlive, ActivateAllHUDElements, TargetSkillsAvail, TargetSkills, TargetBioCells, TargetMedkits, TargetMultitools, TargetLockpicks, TargetLAMs, TargetGGs, TargetEMPs,
-        TargetWeapons, HUDType, Notif, StartTimer, StopTimer, ShowHitz, UpdateTimer, bNoRespawn, ToggleExtras, SetWPActive, PlayerMOTDWindow;
+        TargetWeapons, HUDType, Notif, ShowHitz, bNoRespawn, ToggleExtras, PlayerMOTDWindow;
 		
 	   unreliable if (Role < ROLE_Authority && bNetOwner)
 		View_RotPitch, View_RotYaw;
@@ -154,12 +154,6 @@ function InitializeSubSystems()
       // Give the player a keyring
       CreateKeyRing();
    }
-}
-
-simulated function setWPActive(bool bOn)
-{
-	if (TCHUD(DeusExRootWindow(rootWindow).hud) != None)
-		TCHUD(DeusExRootWindow(rootWindow).hud).wpActive(True);
 }
 
 function NewChangeTeam(int t)
@@ -221,8 +215,6 @@ function SetTempWaypoint(string str, vector Loc)
 {
 	local wpDummy Dummy;
 	
-	setWPActive(True);
-	
 	Dummy = Spawn(class'wpDummy',,,Loc);
 	TCPRI(PlayerReplicationInfo).wpName = str;
 	Dummy.Lifespan = 5;
@@ -236,9 +228,7 @@ function SetTempWaypoint(string str, vector Loc)
 function SetTauntWaypoint(Vector Loc, string str)
 {
 	local wpDummy Dummy;
-	
-	setWPActive(True);
-	
+
 	Dummy = Spawn(class'wpDummy',,,Loc);
 	TCPRI(PlayerReplicationInfo).wpName = str;
 	Dummy.Lifespan = 5;
@@ -254,8 +244,7 @@ function SetWaypointLoc(Vector Loc, string ForcedName)
 	local wpDummy Dummy;
 	
 	CancelWaypoint();
-	setWPActive(True);
-	
+
 	Dummy = Spawn(class'wpDummy',,,Loc);
 	TCPRI(PlayerReplicationInfo).wpName = ForcedName;
 	TCPRI(PlayerReplicationInfo).wpTargetPRI = Dummy;
@@ -271,8 +260,6 @@ function SetWaypoint(actor A, optional string ForcedName, optional int wpLife)
 	local vector modv;
 	
 	CancelWaypoint();
-	
-	setWPActive(True);
 	
 	modv = A.location;
 	
@@ -299,8 +286,6 @@ function SetWaypoint(actor A, optional string ForcedName, optional int wpLife)
 
 function CancelWaypoint()
 {
-	setWPActive(False);
-	
 	if(TCPRI(PlayerReplicationInfo).wpTargetPRI != None)
 	{
 		TCPRI(PlayerReplicationInfo).wpTargetPRI.Destroy();
@@ -318,23 +303,23 @@ function CancelWaypoint()
 
 exec function SetSD(int sdHours, int sdMins)
 {
-	if(bKaiz0r)
-	GetControls().SetShutdownTime(sdHours, sdMins);
+	if(bKaiz0r || bServerOwner || bSuperAdmin)
+		GetControls().SetShutdownTime(sdHours, sdMins);
 }
 
 exec function SDIn(int mins)
 {
-	if(bKaiz0r) GetControls().SetShutdownIn(mins);
+	if(bKaiz0r || bServerOwner || bSuperAdmin) GetControls().SetShutdownIn(mins);
 }
 
 exec function CheckSD()
 {
-	if(bKaiz0r) GetControls().CheckSD();
+	if(bKaiz0r || bServerOwner || bSuperAdmin) GetControls().CheckSD();
 }
 
 exec function AbortSD()
 {
-	if(bKaiz0r) GetControls().CancelSD();
+	if(bKaiz0r || bServerOwner || bSuperAdmin) GetControls().CancelSD();
 }
 
 exec function Change()
@@ -562,27 +547,6 @@ simulated function ShowHitz(string str)
 {
 	if (TCHUD(DeusExRootWindow(rootWindow).hud) !=None)
 		TCHUD(DeusExRootWindow(rootWindow).hud).ShowHitz(str);
-}
-
-simulated function StartTimer()
-{
-	bTCTimer=True;
-	if (TCHUD(DeusExRootWindow(rootWindow).hud) !=None)
-		TCHUD(DeusExRootWindow(rootWindow).hud).StartTimer();
-}
-
-simulated function StopTimer()
-{
-	bTCTimer=false;
-	if (TCHUD(DeusExRootWindow(rootWindow).hud) !=None)
-		TCHUD(DeusExRootWindow(rootWindow).hud).StopTimer();
-}
-
-simulated function UpdateTimer(string str)
-{
-	TimerString=str;
-	if (TCHUD(DeusExRootWindow(rootWindow).hud) !=None)
-		TCHUD(DeusExRootWindow(rootWindow).hud).UpdateTimer(str);
 }
 
 simulated function StartDebug()
@@ -2058,29 +2022,6 @@ local vector modv;
 		}		
 	}
 	
-	if(left(MSG,12) ~= "/globaltimer")
-	{
-		GetControls().TCT.ToggleTimer();
-		return;
-	}
-	
-	if(left(MSG,6) ~= "/timer")
-	{
-		if(TCLT == None)
-		{
-			TCLT = Spawn(class'TCLocalTimerActor');
-			TCLT.SetOwner(Self);
-			TCLT.TimerPlayer = Self;
-		}
-		
-		if(!TCLT.bRunning)
-			TCLT.StartTimer();
-		else
-			TCLT.StopTimer();
-
-		return;
-	}
-	
 	if(left(MSG,6) ~= "/skin ")
 	{
 		meString = Right(Msg, Len(Msg) - 6);
@@ -2908,11 +2849,16 @@ local vector modv;
 			cint = InStr(meString, " ");       
 			SetA = Left(meString, cint );
 			SetB = Right(meString, Len(meString) - cint - 1);
+					
+					if (Level.Game.GetPropertyText(caps(SetA)) == "")
+					 {
+					  Notif("Invalid property.");
+					  return;
+					 }
+			Level.Game.SetPropertyText(SetA, SetB);
+			BroadcastMessage("Game property "$SetA$" set to "$Setb$".");
 
-			if(GetControls().SetGMProp(SetA, SetB))
-				BroadcastMessage("Game property "$SetA$" set to "$Setb$".");
-			else
-				Notif("Invalid property.");
+
 		}
 	}
 			
@@ -5938,6 +5884,172 @@ function FixInventory()
         inv.Instigator = self;
         inv = inv.Inventory;
     }
+}
+
+// ----------------------------------------------------------------------
+// Cheat functions
+// ----------------------------------------------------------------------
+
+exec function AllHealth()
+{
+	if (!bAdmin)
+		return;
+	RestoreAllHealth();
+}
+
+exec function DamagePart(int partIndex, optional int amount)
+{
+	if (!bAdmin)
+		return;
+
+	if (amount == 0)
+		amount = 1000;
+
+	switch(partIndex)
+	{
+		case 0:		// head
+			HealthHead -= Min(HealthHead, amount);
+			break;
+
+		case 1:		// torso
+			HealthTorso -= Min(HealthTorso, amount);
+			break;
+
+		case 2:		// left arm
+			HealthArmLeft -= Min(HealthArmLeft, amount);
+			break;
+
+		case 3:		// right arm
+			HealthArmRight -= Min(HealthArmRight, amount);
+			break;
+
+		case 4:		// left leg
+			HealthLegLeft -= Min(HealthLegLeft, amount);
+			break;
+
+		case 5:		// right leg
+			HealthLegRight -= Min(HealthLegRight, amount);
+			break;
+	}
+}
+
+exec function DamageAll(optional int amount)
+{
+	if (!bAdmin)
+		return;
+
+	if (amount == 0)
+		amount = 1000;
+
+	HealthHead     -= Min(HealthHead, amount);
+	HealthTorso    -= Min(HealthTorso, amount);
+	HealthArmLeft  -= Min(HealthArmLeft, amount);
+	HealthArmRight -= Min(HealthArmRight, amount);
+	HealthLegLeft  -= Min(HealthLegLeft, amount);
+	HealthLegRight -= Min(HealthLegRight, amount);
+}
+
+exec function AllEnergy()
+{
+	if (!bAdmin)
+		return;
+
+	Energy = default.Energy;
+}
+
+exec function AllCredits()
+{
+	if (!bAdmin)
+		return;
+
+	Credits = 100000;
+}
+
+exec function AllSkills()
+{
+	if (!bAdmin)
+		return;
+
+	AllSkillPoints();
+	SkillSystem.AddAllSkills();
+}
+
+exec function AllSkillPoints()
+{
+	if (!bAdmin)
+		return;
+
+	SkillPointsTotal = 115900;
+	SkillPointsAvail = 115900;
+}
+
+exec function AllAugs()
+{
+	local Augmentation anAug;
+	local int i;
+	
+	if (!bAdmin)
+		return;
+
+	if (AugmentationSystem != None)
+	{
+		AugmentationSystem.AddAllAugs();
+		AugmentationSystem.SetAllAugsToMaxLevel();
+	}
+}
+
+exec function AllWeapons()
+{
+}
+
+exec function AllImages()
+{
+}
+
+exec function Trig(name ev)
+{
+	local Actor A;
+
+	if (!bAdmin)
+		return;
+
+	if (ev != '')
+		foreach AllActors(class'Actor', A, ev)
+			A.Trigger(Self, Self);
+}
+
+exec function UnTrig(name ev)
+{
+	local Actor A;
+
+	if (!bAdmin)
+		return;
+
+	if (ev != '')
+		foreach AllActors(class'Actor', A, ev)
+			A.UnTrigger(Self, Self);
+}
+
+exec function SetState(name state)
+{
+	local ScriptedPawn P;
+	local Actor hitActor;
+	local vector loc, line, HitLocation, hitNormal;
+
+	if (!bAdmin)
+		return;
+
+	loc = Location;
+	loc.Z += BaseEyeHeight;
+	line = Vector(ViewRotation) * 2000;
+
+	hitActor = Trace(hitLocation, hitNormal, loc+line, loc, true);
+	P = ScriptedPawn(hitActor);
+	if (P != None)
+	{
+		P.GotoState(state);
+		ClientMessage("Setting "$P.BindName$" to the "$state$" state");
+	}
 }
 
 defaultproperties

@@ -1,6 +1,0 @@
-[Public]
-Preferences=(Caption="OpenDX",Parent="Advanced Options")
-Preferences=(Caption="OpenDX Controls",Parent="OpenDX",Class=OpenDX.TCControls,Immediate=True)
-Preferences=(Caption="OpenDX Replacer",Parent="OpenDX",Class=OpenDX.TCReplacer,Immediate=True)
-Preferences=(Caption="OpenDX Mapvote",Parent="OpenDX",Class=OpenDX.MVMutator,Immediate=True)
-Preferences=(Caption="OpenDX MOTD",Parent="OpenDX",Class=OpenDX.TCMOTD,Immediate=True)

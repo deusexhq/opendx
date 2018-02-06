@@ -544,9 +544,6 @@ function PostDrawWindow(GC gc)
 	}
 	//ENDWP
 		 
-//	if (mmp.bTCTimer)
-	//	DrawStaticText(gc, mmp.TimerString, 0.63, colGold, false);
-	
 	if (!tPRI.bIsSpectator) 
     {
 		//if (mmp.GetControls().bNameDisplay)

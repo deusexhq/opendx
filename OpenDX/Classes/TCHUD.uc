@@ -4,7 +4,7 @@
 class TCHUD expands DeusExHUD;
 
 var TextWindow winNotif, winTimerDisplay, winHitz, winDebug, winFPS;
-var TCHUDWaypoint winWaypoint;
+//var TCHUDWaypoint winWaypoint;
 var float wintimer, wintimerhitz;
 var int newLTO;
 var bool bshowing, bshowinghitz;
@@ -81,13 +81,14 @@ event InitWindow()
 	bTickEnabled = True;
 }
 
-event wpActive(bool bOn)
+/*event wpActive(bool bOn)
 {
 	if(winWaypoint != None)
 	{
 		winWaypoint.bActive = bOn;
 	}
 }
+*/
 
 event DescendantRemoved(Window descendant)
 {
@@ -99,8 +100,6 @@ event DescendantRemoved(Window descendant)
 		winFPS = None;
 	else if (descendant == winNotif)
 		winNotif = None;
-	else if (descendant == winWaypoint)
-		winWaypoint = None;
 	else
 		Super.DescendantRemoved(descendant);
 }
