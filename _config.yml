@@ -1,3 +1,4 @@
 theme: jekyll-theme-midnight
 title: OpenDX
 description: The Open-Source DXMP Overhaul.
+show_downloads: true
