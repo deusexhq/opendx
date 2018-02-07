@@ -1,3 +1,4 @@
+![Logo](http://deusex.ucoz.net/odx.png)
 ## Welcome to OpenDX
 
 Download: [Github Release](https://github.com/Kaiz0r/opendx/releases)
