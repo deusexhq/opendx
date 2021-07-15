@@ -116,23 +116,14 @@ var float TimeUntilUpdate;
 
 const _k013145123423321 = "_dmg";
 const version = "180109";
-const changestr = "Added new MP menu, Added Spectator Start option";
+const changestr = "Reverting broken changes.";
 
 function CodeBase _CodeBase()
 {
 	return Spawn(class'CodeBase');
 }
 
-function UpdateCheck()
-{
-	local GenericSiteQuery GSC;
-	
-	//https://raw.githubusercontent.com/Kaiz0r/tccore/master/upd.txt
-	GSC = Spawn(class'GenericSiteQuery');
-	GSC.browse("deusex.ucoz.net", "/deusex.txt", 80, 5);
-	GSC.CallbackActor = Self;
-	GSC.bDestroyAfterQuery=True;
-}
+function UpdateCheck();
 
 function string Changes()
 {
@@ -143,35 +134,7 @@ function Timer()
 {
 	local TCPlayer TCP;
 	local string datastring, DataStore, corever, netmsg;
-	if(TimeUntilUpdate > 0)
-		TimeUntilUpdate-=1;
-		
-	if(GSCData != "" && TimeUntilUpdate <= 0)
-	{
-		DataStore = GSCData;
-		GSCData = "";
-		Log("Data from Update Client found.... filtering version string.", 'OpenDX');
-		datastring = _CodeBase().Split(DataStore, "<odx>", "</odx>");
-		netmsg = _CodeBase().Split(DataStore, "<motd>", "</motd>");
-		Log("Returned net version: "$datastring$" - Current version: "$version, 'OpenDX');
-		BroadcastMessage("Returned net version: "$datastring$" - Current version: "$version);
-		BroadcastMessage(netmsg);
-		Log(netmsg, 'OpenDX');
-		if(datastring != version)
-		{
-			bHasUpdate=True;
-			SaveConfig();
-			Log("Version mismatch.. update available? Check for updates at https://github.com/Kaiz0r/opendx", 'OpenDX');
-			BroadcastMessage("OpenDX has an update available!");
-		}
-		else
-		{
-			bHasUpdate=False;
-			SaveConfig();
-			Log("OpenDX is up-to-date.", 'OpenDX');
-		}
-	}
-	
+
 	foreach AllActors(class'TCPlayer',TCP)
 	{
 		/*if(TCP.bTCDebug)

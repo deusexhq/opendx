@@ -107,6 +107,11 @@ exec function TEH()
 	ToggleExtras();
 }
 
+// Blanked, to re-implement later
+function UpdateTimer(string t);
+function StopTimer();
+function StartTimer();
+
 function InitializeSubSystems()
 {
 	// Spawn the BarkManager
