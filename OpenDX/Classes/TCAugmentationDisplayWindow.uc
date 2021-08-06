@@ -401,6 +401,26 @@ function DrawRemoteInventory(GC gc, TCPlayer mmp)
 	}
 }
 
+function Texture GetGridTexture(Texture tex)
+{
+	if (tex == None)
+		return Texture'BlackMaskTex';
+	else if (tex == Texture'BlackMaskTex')
+		return Texture'BlackMaskTex';
+	else if (tex == Texture'GrayMaskTex')
+		return Texture'BlackMaskTex';
+	else if (tex == Texture'PinkMaskTex')
+		return Texture'BlackMaskTex';
+	else if (VisionTargetStatus == VISIONENEMY)         
+      return Texture'Virus_SFX';
+   else if (VisionTargetStatus == VISIONALLY)
+		return Texture'Wepn_Prifle_SFX';
+   else if (VisionTargetStatus == VISIONNEUTRAL)
+      return Texture'WhiteStatic';
+   else
+      return Texture'WhiteStatic';
+}
+
 function NameAllViewedPlayers(GC gc, TCPlayer mmp)
 {
     local Actor target;

@@ -396,6 +396,8 @@ state PlayerWalking
 
 	event PlayerTick(float deltaTime)
 	{
+        //CollisionHeight = 18
+        //SetCollisionSize(7, 18);
         //DEUS_EX AMSD Additional updates
         //Because of replication delay, aug icons end up being a step behind generally.  So refresh them
         //every freaking tick.  
@@ -439,13 +441,14 @@ state PlayerWalking
 defaultproperties
 {
 	Mass=2
-PlayerReplicationInfoClass=Class'TCPRI'
-     CollisionRadius=5.000000
-     CollisionHeight=10.000000
+    PlayerReplicationInfoClass=Class'TCPRI'
+    CollisionRadius=3.000000
+    CollisionHeight=8.000000
      BaseEyeHeight=10.00
      Drawscale=0.18
      mpGroundSpeed=30.00
     mpWaterSpeed=10.00
     Jumpz=200
     MaxStepHeight=10.000000
+    BaseEyeHeight=8
 }

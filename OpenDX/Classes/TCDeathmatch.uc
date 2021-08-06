@@ -366,16 +366,22 @@ event PlayerPawn Login (string Portal, string URL, out string Error, Class<Playe
         classStr="";
     }
     Log(classStr@purgedClassStr, 'Login');
-    if((purgedClassStr ~= "MPNSF") || (purgedClassStr ~= "MTLNSF") )
-        SpawnClass = class'TCNSF';
-    else if((purgedClassStr ~= "MPUNATCO") || (purgedClassStr ~= "MTLUNATCO") )
-        SpawnClass = class'TCUNATCO';
-    else if((purgedClassStr ~= "MPMJ12") || (purgedClassStr ~= "MTLMJ12") )
-        SpawnClass = class'TCMJ12';
-    else if(purgedClassStr ~= "DXMPPlayer")
-		SpawnClass = class'TCNSF';
-	else
-		SpawnClass = class'TCMJ12';
+    
+    if(bToybox){
+        SpawnClass = class'ToyMC';
+    }else{
+        if((purgedClassStr ~= "MPNSF") || (purgedClassStr ~= "MTLNSF") )
+            SpawnClass = class'TCNSF';
+        else if((purgedClassStr ~= "MPUNATCO") || (purgedClassStr ~= "MTLUNATCO") )
+            SpawnClass = class'TCUNATCO';
+        else if((purgedClassStr ~= "MPMJ12") || (purgedClassStr ~= "MTLMJ12") )
+            SpawnClass = class'TCMJ12';
+        else if(purgedClassStr ~= "DXMPPlayer")
+            SpawnClass = class'TCNSF';
+        else
+            SpawnClass = class'TCMJ12';
+    }
+
 		
     ChangeOption(URL,"Class",string(SpawnClass));
         newPlayer = MTLPlayer(super(DeathMatchGame).Login(Portal,URL,Error,SpawnClass));
