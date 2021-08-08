@@ -18,6 +18,6 @@ defaultproperties
     MultiSkins(6)=Texture'DeusExCharacters.Skins.FramesTex4'
     MultiSkins(7)=Texture'DeusExCharacters.Skins.LensesTex5'
     CollisionRadius=3.000000
-    CollisionHeight=8.000000
+    CollisionHeight=10.000000
     BaseEyeHeight=7
 }
