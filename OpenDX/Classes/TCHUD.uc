@@ -71,9 +71,13 @@ event InitWindow()
 	msgLog 			= HUDLogDisplay(NewChild(Class'TCHUDLogDisplay'));
 	msgLog.SetLogTimeout(15);
 	//TCHUDLogDisplay(msgLog).TextLogo=TextLogo;
-
+    if (frobDisplay != None) frobDisplay.Destroy();
+    frobDisplay = FrobDisplayWindow(NewChild(Class'TCFrobDisplayWindow'));
+	frobDisplay.SetWindowAlignments(HALIGN_Full, VALIGN_Full);
+	
 	if (hit != none) hit.Destroy();
 	hit				= HUDHitDisplay(NewChild(Class'TCHUDHitDisplay'));
+	
 	if (augDisplay != None)	augDisplay.Destroy();
 	augDisplay		= AugmentationDisplayWindow(NewChild(Class'TCAugmentationDisplayWindow'));
 	augDisplay.SetWindowAlignments(HALIGN_Full, VALIGN_Full);
@@ -252,6 +256,8 @@ function UpdateSettings( DeusExPlayer player )
 		activeItems.SetVisibility(player.bAugDisplayVisible);
 		damageDisplay.SetVisibility(player.bHitDisplayVisible);
 		cross.SetCrosshair(player.bCrosshairVisible);
+        //frobDisplay = FrobDisplayWindow(NewChild(Class'FrobDisplayWindow'));
+        //frobDisplay.SetWindowAlignments(HALIGN_Full, VALIGN_Full);
 		if (HUD_mode > 1)
 		{
 			// playing
@@ -265,6 +271,7 @@ function UpdateSettings( DeusExPlayer player )
 			//compass.SetVisibility(false);
 			ammo.SetVisibility(false);
 			belt.SetVisibility(false);
+			//frobDisplay.Destroy();
 			ResetCrosshair();
 		}
 	}
@@ -278,6 +285,7 @@ function UpdateSettings( DeusExPlayer player )
 		compass.SetVisibility(false);
 		ammo.SetVisibility(false);
 		belt.SetVisibility(false);
+		//frobDisplay.Destroy();
 		ResetCrosshair();
 	}
 }

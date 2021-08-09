@@ -5869,8 +5869,95 @@ function ServerReStartGame()
 //Fob distance hacking
 function HighlightCenterObject()
 {
+	local Actor target, smallestTarget;
+	local Vector HitLoc, HitNormal, StartTrace, EndTrace;
+	local DeusExRootWindow root;
+	local float minSize;
+	local bool bFirstTarget;
+
+	if (IsInState('Dying'))
+		return;
+		
     MaxFrobDistance = defaultMaxFrobDistance;
-    Super.HighlightCenterObject();
+	root = DeusExRootWindow(rootWindow);
+
+	// only do the trace every tenth of a second
+	if (FrobTime >= 0.1)
+	{
+		// figure out how far ahead we should trace
+		StartTrace = Location;
+		EndTrace = Location + (Vector(ViewRotation) * MaxFrobDistance);
+
+		// adjust for the eye height
+		StartTrace.Z += BaseEyeHeight;
+		EndTrace.Z += BaseEyeHeight;
+
+		smallestTarget = None;
+		minSize = 99999;
+		bFirstTarget = True;
+
+		// find the object that we are looking at
+		// make sure we don't select the object that we're carrying
+		// use the last traced object as the target...this will handle
+		// smaller items under larger items for example
+		// ScriptedPawns always have precedence, though
+		foreach TraceActors(class'Actor', target, HitLoc, HitNormal, EndTrace, StartTrace)
+		{
+            if(TCPlayer(target) != None) smallestTarget = target;
+			if (IsFrobbable(target) && (target != CarriedDecoration))
+			{
+				if (target.IsA('ScriptedPawn'))
+				{
+					smallestTarget = target;
+					break;
+				}
+				else if (target.IsA('Mover') && bFirstTarget)
+				{
+					smallestTarget = target;
+					break;
+				}
+				else if (target.CollisionRadius < minSize)
+				{
+					minSize = target.CollisionRadius;
+					smallestTarget = target;
+					bFirstTarget = False;
+				}
+			}
+		}
+		FrobTarget = smallestTarget;
+
+		// reset our frob timer
+		FrobTime = 0;
+	}
+}
+
+function String GetDisplayName(Actor actor, optional Bool bUseFamiliar)
+{
+	local String displayName;
+
+	// Sanity check
+	if ((actor == None) || (player == None) || (rootWindow == None))
+		return "";
+
+    if(DeusExPlayer(Actor) != None) return DeusExPlayer(Actor).PlayerReplicationInfo.PlayerName;
+    
+	// If we've spoken to this person already, use the 
+	// Familiar Name
+	if ((actor.FamiliarName != "") && ((actor.LastConEndTime > 0) || (bUseFamiliar)))
+		displayName = actor.FamiliarName;
+
+	if ((displayName == "") && (actor.UnfamiliarName != ""))
+		displayName = actor.UnfamiliarName;
+
+	if (displayName == "")
+	{
+		if (actor.IsA('DeusExDecoration'))
+			displayName = DeusExDecoration(actor).itemName;
+		else
+			displayName = actor.BindName;
+	}
+
+	return displayName;
 }
 
 function DoFrob(Actor Frobber, Inventory frobWith)
