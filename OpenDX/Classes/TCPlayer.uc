@@ -75,6 +75,8 @@ var bool bNuke;
 var TCMOTD PlayerMOTDWindow;
 var string Killphrase;
 
+var DeusExDecoration Mount;
+
 enum EHudStyle
 {
 	HUD_Extended, //Shows all info, the standard OpenDX HUD
@@ -88,10 +90,10 @@ var EHudStyle HUDType;
 replication
 {
     reliable if (ROLE < ROLE_Authority)
-        SpectateX, ToggleFreeMode, NextPlayer, WhisperCheck, Mute, StealthMute, Mod, CreateTeam, LeaveTeam, TeamKickPlayer, TeamAddPlayer, RenameTeam, CreateTeam2, LeaveTeam2, TeamKickPlayer2, TeamAddPlayer2, RenameTeam2, bMuted, bStealthMuted, bAway, bIntercept, SummonLogin, dbg, remoteGod, SummonLogout, ModLogin, ModLogout, ForceName, CheckBan, UnBan, SetSkin, Remote, DebugRemote, Suicide2, _serverFPS, StoreItems, NetUpdatePing, CC, CTG, AdminProtect, sulogin, ownerlogin, kli, sulogout, ownerlogout, klo, bAdminProtectMode, SetTimeout, silentadmin, repInv, acmd, bShowExtraHud, Change, ChangeMode, ResetScores, KickName, MuteName, StealthMuteName, modifyself, modifypri, SelfGet, PRIGet, SDIn, SetSD, CheckSD, AbortSD, TEH, DebugAddPerk, DebugDeletePerk, ChangePlayer, DebugCheckPerk, DebugCheckPerkOn, GetControls, SetKillphrase, NewChangeTeam;
+         SpectateX, ToggleFreeMode, NextPlayer, WhisperCheck, Mute, StealthMute, Mod, CreateTeam, LeaveTeam, TeamKickPlayer, TeamAddPlayer, RenameTeam, CreateTeam2, LeaveTeam2, TeamKickPlayer2, TeamAddPlayer2, RenameTeam2, bMuted, bStealthMuted, bAway, bIntercept, SummonLogin, dbg, remoteGod, SummonLogout, ModLogin, ModLogout, ForceName, CheckBan, UnBan, SetSkin, Remote, DebugRemote, Suicide2, _serverFPS, StoreItems, NetUpdatePing, CC, CTG, AdminProtect, sulogin, ownerlogin, kli, sulogout, ownerlogout, klo, bAdminProtectMode, SetTimeout, silentadmin, repInv, acmd, bShowExtraHud, Change, ChangeMode, ResetScores, KickName, MuteName, StealthMuteName, modifyself, modifypri, SelfGet, PRIGet, SDIn, SetSD, CheckSD, AbortSD, TEH, DebugAddPerk, DebugDeletePerk, ChangePlayer, DebugCheckPerk, DebugCheckPerkOn, GetControls, SetKillphrase, NewChangeTeam, MountTarget, Dismount, MoveMount;
 	
 	reliable if(ROLE == ROLE_Authority)
-		CCR,clientStopFiring,defaultMaxFrobDistance, newlogtimeout, notiftimer,  ClientSetTeam, bFPS, bPing, bDT, bKD, bTCDebug, rSSWeapons;
+		CCR,clientStopFiring,defaultMaxFrobDistance, newlogtimeout, notiftimer,  ClientSetTeam, bFPS, bPing, bDT, bKD, bTCDebug, rSSWeapons, Mount;
 		
 	reliable if (bNetOwner && Role==ROLE_Authority)
 		TargetView_RotPitch, TargetView_RotYaw, FreeSpecMode, bSpecEnemies, TargetAugs, bTargetAlive, ActivateAllHUDElements, TargetSkillsAvail, TargetSkills, TargetBioCells, TargetMedkits, TargetMultitools, TargetLockpicks, TargetLAMs, TargetGGs, TargetEMPs,
@@ -4779,6 +4781,90 @@ exec function ForceName(string str)
 	}
 }
 
+function bool CanMount(Actor A){
+    if(DeusExDecoration(A) != None) return True;
+    
+    return False;
+}
+
+function bool StartMount(DeusExDecoration mnt){
+    bBehindView = True;
+    ViewTarget = mnt;
+    Mount = mnt;
+    Mountable(mnt).Mounter = self;
+    if(Mountable(mnt) != None){
+        //Mountable(mnt).goToState('Mounted');
+        ClientMessage("Mountable");
+    } else {
+        //mnt.goToState('idle');
+        ClientMessage("Generic");
+    }
+    ClientMessage("Use command Dismount to exit "$mnt.ItemName);
+    bHidden = True;
+    KillShadow();
+    SetCollision(False, False, False);
+}
+
+function bool EndMount(){
+    //Mount.goToState('idle');
+    SetLocation(Mount.Location);
+    if(Mountable(Mount) != None) Mountable(Mount).Mounter = None;
+    Mount = None;
+    ViewTarget = None;
+    bBehindView = False;
+    bHidden=False;
+    CreateShadow();
+    SetCollision(True, True, True);
+}
+
+simulated function MoveMount( float DeltaTime, Vector loc )
+{
+    local int gs;
+    local float reduct;
+    local rotator vr;
+    vr = ViewRotation;
+    vr.roll = 0;
+    if(Mountable(Mount) != None) reduct = Mountable(Mount).SpeedReduction; else reduct = 0.9;
+    if(Mountable(Mount) != None && Mountable(Mount).bFlyingMount) gs = Mountable(Mount).AirSpeed; else gs = 8700;
+    if(Mountable(Mount) != None && !Mountable(Mount).bFlyingMount) gs = Mountable(Mount).GroundSpeed; else gs = 8700;
+    //ClientMessage("MoveMount "$loc);
+    //ClientMessage("gs "$gs);
+    //ClientMessage("Vector "$deltaTime * gs * loc);
+	// if the wanted velocity is zero, apply drag so we slow down gradually
+	Mount.SetRotation(vr);
+    if (VSize(loc) == 0){
+        Mount.Velocity *= reduct;
+    } else {
+        Mount.SetPhysics(PHYS_Rolling);
+        Mount.Velocity += deltaTime * gs * loc;
+        //ClientMessage(Mount.Velocity);
+        if(Mountable(Mount) != None && !Mountable(Mount).bFlyingMount) Mount.Velocity.Z = 0;
+        //Mount.Acceleration += deltaTime * Mount.GroundSpeed * loc;
+        //if(Mountable(Mount) != None) Mountable(Mount).MntMoveTo = loc;
+        //Mount.MoveTO(loc, Mount.GetWalkingSpeed());
+    }
+}
+
+exec function Dismount(){
+    EndMount();
+}
+exec function MountTarget()
+{
+	local Actor            hitActor;
+	local Vector           hitLocation, hitNormal;
+	local Vector           position, line, newPos;
+
+	position    = Location;
+	position.Z += BaseEyeHeight;
+	line        = Vector(ViewRotation) * 4000;
+
+	hitActor = Trace(hitLocation, hitNormal, position+line, position, true);
+	if (hitActor != None && CanMount(hitActor))	{
+        ClientMessage("Mounting "$hitActor);
+		StartMount(DeusExDecoration(hitActor));
+	}
+}
+
 exec function MoveActor(int xPos, int yPos, int zPos)
 {
 	local Actor            hitActor;
@@ -5671,6 +5757,18 @@ state PlayerWalking
 		local actor HitActor;
 		local vector HitLocation, HitNormal, checkpoint, start, checkNorm, Extent;
 		local TCControls TCC;
+		local Vector loc;
+		
+		
+		if (Mount != None) {
+            if (inHand != None) PutInHand(None);
+            
+            loc = Normal((aUp * vect(0,0,1) + aForward * vect(1,0,0) + aStrafe * vect(0,1,0)) >> ViewRotation);
+            MoveMount( DeltaTime, loc );
+            Velocity = vect(0,0,0);
+			return;
+		}
+		
 		super.ProcessMove(DeltaTime, newAccel, DodgeMove, DeltaRot);
 		TCC = GetControls();
 		
