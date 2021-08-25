@@ -4821,27 +4821,17 @@ simulated function MoveMount( float DeltaTime, Vector loc )
 {
     local int gs;
     local float reduct;
-    local rotator vr;
-    vr = ViewRotation;
-    vr.roll = 0;
+
     if(Mountable(Mount) != None) reduct = Mountable(Mount).SpeedReduction; else reduct = 0.9;
     if(Mountable(Mount) != None && Mountable(Mount).bFlyingMount) gs = Mountable(Mount).AirSpeed; else gs = 8700;
     if(Mountable(Mount) != None && !Mountable(Mount).bFlyingMount) gs = Mountable(Mount).GroundSpeed; else gs = 8700;
-    //ClientMessage("MoveMount "$loc);
-    //ClientMessage("gs "$gs);
-    //ClientMessage("Vector "$deltaTime * gs * loc);
-	// if the wanted velocity is zero, apply drag so we slow down gradually
-	Mount.SetRotation(vr);
+
+	Mount.SetPhysics(PHYS_Rolling);
     if (VSize(loc) == 0){
         Mount.Velocity *= reduct;
     } else {
-        Mount.SetPhysics(PHYS_Rolling);
         Mount.Velocity += deltaTime * gs * loc;
-        //ClientMessage(Mount.Velocity);
         if(Mountable(Mount) != None && !Mountable(Mount).bFlyingMount) Mount.Velocity.Z = 0;
-        //Mount.Acceleration += deltaTime * Mount.GroundSpeed * loc;
-        //if(Mountable(Mount) != None) Mountable(Mount).MntMoveTo = loc;
-        //Mount.MoveTO(loc, Mount.GetWalkingSpeed());
     }
 }
 
@@ -5758,11 +5748,13 @@ state PlayerWalking
 		local vector HitLocation, HitNormal, checkpoint, start, checkNorm, Extent;
 		local TCControls TCC;
 		local Vector loc;
-		
-		
+        local rotator vr;
+        //vr.pitch = ViewRotation.pitch;
+        vr.yaw = ViewRotation.yaw;
+		vr.roll = ViewRotation.roll;
 		if (Mount != None) {
             if (inHand != None) PutInHand(None);
-            
+            Mount.SetRotation(vr);
             loc = Normal((aUp * vect(0,0,1) + aForward * vect(1,0,0) + aStrafe * vect(0,1,0)) >> ViewRotation);
             MoveMount( DeltaTime, loc );
             Velocity = vect(0,0,0);
